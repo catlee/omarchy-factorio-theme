@@ -1,0 +1,33 @@
+:root {
+  --lwt-accent-color: #26231b !important;
+  --lwt-text-color: #c2b185 !important;
+  --toolbar-bgcolor: #26231b !important;
+  --toolbar-color: #c2b185 !important;
+  --toolbarbutton-icon-fill: #c2b185 !important;
+  --tab-selected-bgcolor: #191810 !important;
+  --tab-selected-textcolor: #e2d8bf !important;
+}
+
+#navigator-toolbox,
+#TabsToolbar,
+#nav-bar,
+#PersonalToolbar,
+#toolbar-menubar {
+  background-color: #26231b !important;
+  color: #c2b185 !important;
+}
+
+.tabbrowser-tab[selected] .tab-background {
+  background-color: #191810 !important;
+  box-shadow: inset 0 2px #dda13b;
+}
+
+#urlbar-background,
+#searchbar {
+  background-color: #191810 !important;
+  border: 1px solid #514b3f !important;
+}
+
+#urlbar[focused="true"] > #urlbar-background {
+  border-color: #dda13b !important;
+}
