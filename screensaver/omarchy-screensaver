@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Trace OMARCHY as a continuous path of ASCII rail."""
+"""Trace OMARCHY one letter at a time using ASCII rail strokes."""
 
+import argparse
 import curses
 import shutil
 import subprocess
@@ -8,23 +9,27 @@ import time
 
 
 GLYPHS = {
-    "O": ("#######", "#.....#", "#.....#", "#.....#", "#.....#", "#.....#", "#######"),
-    "M": ("#.....#", "##...##", "###.###", "#.###.#", "#.....#", "#.....#", "#.....#"),
-    "A": (".#####.", "##...##", "#.....#", "#.....#", "#######", "#.....#", "#.....#"),
-    "R": ("#######", "#.....#", "#.....#", "######.", "#..##..", "#...##.", "#....##"),
-    "C": ("#######", "#......", "#......", "#......", "#......", "#......", "#######"),
-    "H": ("#.....#", "#.....#", "#.....#", "#######", "#.....#", "#.....#", "#.....#"),
-    "Y": ("#.....#", "##...##", ".##.##.", "..###..", "...#...", "...#...", "...#..."),
+    "O": (".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."),
+    "M": ("#...#", "##.##", "#.#.#", "#...#", "#...#", "#...#", "#...#"),
+    "A": ("..#..", ".#.#.", "#...#", "#####", "#...#", "#...#", "#...#"),
+    "R": ("####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"),
+    "C": (".####", "#....", "#....", "#....", "#....", "#....", ".####"),
+    "H": ("#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"),
+    "Y": ("#...#", ".#.#.", "..#..", "..#..", "..#..", "..#..", "..#.."),
 }
+CELL_WIDTH = 2
 LETTER_GAP = 2
 ROW_SCALE = 3
 FRAME_DELAY = 0.018
-TRACE_COLOR, RAIL_COLOR = range(1, 3)
 
 
 def neighbors(point, cells):
     x, y = point
-    for candidate in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+    for candidate in (
+        (x - 1, y - 1), (x, y - 1), (x + 1, y - 1),
+        (x - 1, y),                   (x + 1, y),
+        (x - 1, y + 1), (x, y + 1), (x + 1, y + 1),
+    ):
         if candidate in cells:
             yield candidate
 
@@ -46,35 +51,32 @@ def trace_order(cells):
     return route
 
 
-def make_word():
-    cells = set()
-    letters = []
-    for letter_index, letter in enumerate("OMARCHY"):
-        x_offset = letter_index * (7 + LETTER_GAP)
-        letter_cells = {
-            (x + x_offset, y)
+def glyph_data():
+    result = []
+    for letter in "OMARCHY":
+        cells = {
+            (x, y)
             for y, row in enumerate(GLYPHS[letter])
             for x, pixel in enumerate(row)
             if pixel == "#"
         }
-        letters.append(letter_cells)
-        cells.update(letter_cells)
-
-    for left, right in zip(letters, letters[1:]):
-        left_edge = max(x for x, _ in left)
-        right_edge = min(x for x, _ in right)
-        start, end = min(
-            ((a, b) for a in left if a[0] == left_edge for b in right if b[0] == right_edge),
-            key=lambda pair: abs(pair[0][1] - pair[1][1]),
-        )
-        step = 1 if end[1] > start[1] else -1
-        cells.update((x, start[1]) for x in range(start[0] + 1, right_edge))
-        cells.update((right_edge - 1, y) for y in range(start[1], end[1] + step, step))
-
-    return cells, trace_order(cells)
+        result.append((cells, trace_order(cells)))
+    return result
 
 
-CELLS, ROUTE = make_word()
+GLYPHS_TO_DRAW = glyph_data()
+
+
+def print_art():
+    for y in range(7):
+        row = []
+        for index, (cells, _) in enumerate(GLYPHS_TO_DRAW):
+            row.extend(rail_char((x, y), cells) if (x, y) in cells else "  " for x in range(5))
+            if index < len(GLYPHS_TO_DRAW) - 1:
+                row.append(" " * LETTER_GAP * CELL_WIDTH)
+        line = "".join(row)
+        for _ in range(ROW_SCALE):
+            print(line)
 
 
 def rail_char(point, shown):
@@ -82,71 +84,104 @@ def rail_char(point, shown):
     x, y = point
     horizontal = (x - 1, y) in adjacent or (x + 1, y) in adjacent
     vertical = (x, y - 1) in adjacent or (x, y + 1) in adjacent
+    diagonal_up = (x - 1, y - 1) in adjacent or (x + 1, y + 1) in adjacent
+    diagonal_down = (x + 1, y - 1) in adjacent or (x - 1, y + 1) in adjacent
     if horizontal and vertical:
-        return "+"
+        return "++"
     if horizontal:
-        return "="
+        return "=="
     if vertical:
-        return "|"
-    return "o"
+        return "||"
+    if diagonal_up and diagonal_down:
+        return "++"
+    if diagonal_up:
+        return "\\\\"
+    if diagonal_down:
+        return "//"
+    return "oo"
 
 
-def draw(screen, shown, cursor):
+def draw(screen, completed, current, current_letter, cursor):
     height, width = screen.getmaxyx()
     screen.erase()
-    left = max(0, (width - (7 * 7 + LETTER_GAP * 6)) // 2)
+    art_width = len(GLYPHS_TO_DRAW) * 5 * CELL_WIDTH + (len(GLYPHS_TO_DRAW) - 1) * LETTER_GAP * CELL_WIDTH
+    left = max(0, (width - art_width) // 2)
     top = max(0, (height - 7 * ROW_SCALE) // 2)
-    for (x, y) in CELLS:
-        if (x, y) not in shown:
-            continue
-        char = "*" if (x, y) == cursor else rail_char((x, y), shown)
-        color = TRACE_COLOR if (x, y) == cursor else RAIL_COLOR
+
+    for y in range(7):
         for row in range(top + y * ROW_SCALE, top + (y + 1) * ROW_SCALE):
-            try:
-                screen.addstr(row, left + x, char, curses.color_pair(color))
-            except curses.error:
-                pass
+            x = left
+            for index, (cells, _) in enumerate(GLYPHS_TO_DRAW):
+                shown = cells if index < completed else current if index == current_letter else set()
+                for cell_x in range(5):
+                    point = (cell_x, y)
+                    if point not in shown:
+                        text, style = "  ", curses.A_NORMAL
+                    elif index == current_letter and point == cursor:
+                        text, style = "<>", curses.A_REVERSE | curses.A_BOLD
+                    else:
+                        text = rail_char(point, shown)
+                        style = curses.A_BOLD if index == current_letter else curses.A_NORMAL
+                    try:
+                        screen.addstr(row, x, text, style)
+                    except curses.error:
+                        pass
+                    x += CELL_WIDTH
+                if index < len(GLYPHS_TO_DRAW) - 1:
+                    x += LETTER_GAP * CELL_WIDTH
     screen.refresh()
 
 
-def run(screen):
+def wait(screen, duration, last_focus_check, preview):
+    deadline = time.monotonic() + duration
+    while time.monotonic() < deadline:
+        if screen.getch() != -1:
+            return False
+        now = time.monotonic()
+        if not preview and now - last_focus_check[0] > 1:
+            last_focus_check[0] = now
+            try:
+                hyprctl = shutil.which("hyprctl")
+                if hyprctl and "org.omarchy.screensaver" not in subprocess.check_output(
+                    [hyprctl, "activewindow", "-j"], stderr=subprocess.DEVNULL, text=True
+                ):
+                    return False
+            except Exception:
+                pass
+        time.sleep(0.01)
+    return True
+
+
+def run(screen, preview):
     curses.curs_set(0)
     screen.nodelay(True)
-    curses.start_color()
-    curses.use_default_colors()
-    curses.init_pair(TRACE_COLOR, 208, -1)
-    curses.init_pair(RAIL_COLOR, 106, -1)
+    curses.flushinp()
+    last_focus_check = [0.0]
 
-    last_focus_check = 0.0
     while True:
-        shown = set()
-        for point in ROUTE:
-            shown.add(point)
-            draw(screen, shown, point)
-            deadline = time.monotonic() + FRAME_DELAY
-            while time.monotonic() < deadline:
-                if screen.getch() != -1:
+        completed = 0
+        for letter_index, (_, route) in enumerate(GLYPHS_TO_DRAW):
+            shown = set()
+            for point in route:
+                shown.add(point)
+                draw(screen, completed, shown, letter_index, point)
+                if not wait(screen, FRAME_DELAY, last_focus_check, preview):
                     return
-                now = time.monotonic()
-                if now - last_focus_check > 1:
-                    last_focus_check = now
-                    try:
-                        hyprctl = shutil.which("hyprctl")
-                        if hyprctl and "org.omarchy.screensaver" not in subprocess.check_output(
-                            [hyprctl, "activewindow", "-j"], stderr=subprocess.DEVNULL, text=True
-                        ):
-                            return
-                    except Exception:
-                        pass
-                time.sleep(0.01)
-
-        draw(screen, shown, None)
-        deadline = time.monotonic() + 2
-        while time.monotonic() < deadline:
-            if screen.getch() != -1:
+            completed += 1
+            draw(screen, completed, set(), letter_index + 1, None)
+            if not wait(screen, 0.25, last_focus_check, preview):
                 return
-            time.sleep(0.05)
+
+        if not wait(screen, 2, last_focus_check, preview):
+            return
 
 
 if __name__ == "__main__":
-    curses.wrapper(run)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--preview", action="store_true", help="keep running outside Omarchy's screensaver window")
+    parser.add_argument("--art", action="store_true", help="print the completed rail wordmark")
+    args = parser.parse_args()
+    if args.art:
+        print_art()
+    else:
+        curses.wrapper(run, args.preview)
