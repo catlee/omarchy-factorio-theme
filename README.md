@@ -21,7 +21,7 @@ omarchy theme set factorio
 ## ASCII screensaver
 
 This animated ASCII screensaver replaces Omarchy's default screensaver command.
-Install it with:
+It is installed by `./install.sh`. To install it manually:
 
 ```sh
 install -Dm755 "$PWD/screensaver/omarchy-screensaver" \
