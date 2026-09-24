@@ -2,7 +2,7 @@
 
 A dark, industrial Omarchy theme built around charcoal steel, machine greens, and furnace orange.
 
-The theme includes generated wallpapers for several Factorio planets, plus selected Factorio press-kit, blog, and store images for local review. See [ATTRIBUTION.md](ATTRIBUTION.md) before sharing the repo.
+The theme includes generated wallpapers for several Factorio planets. See [ATTRIBUTION.md](ATTRIBUTION.md) for wallpaper details.
 
 ## Install
 
