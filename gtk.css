@@ -1,0 +1,45 @@
+@define-color background #26231b;
+@define-color surface #302c22;
+@define-color raised_surface #3b3528;
+@define-color selection #49351f;
+@define-color foreground #d4cab2;
+@define-color muted #92856c;
+@define-color accent #dda13b;
+@define-color red #c85e40;
+@define-color orange #dda13b;
+@define-color yellow #dfac42;
+@define-color green #a3a752;
+@define-color cyan #8da18a;
+@define-color blue #899897;
+@define-color magenta #b17a66;
+
+@define-color accent_bg_color @accent;
+@define-color accent_fg_color @background;
+@define-color accent_color @accent;
+@define-color window_bg_color @background;
+@define-color window_fg_color @foreground;
+@define-color view_bg_color @background;
+@define-color view_fg_color @foreground;
+@define-color sidebar_bg_color @surface;
+@define-color sidebar_fg_color @foreground;
+@define-color headerbar_bg_color @surface;
+@define-color headerbar_fg_color @foreground;
+@define-color card_bg_color @raised_surface;
+@define-color card_fg_color @foreground;
+@define-color popover_bg_color @raised_surface;
+@define-color popover_fg_color @foreground;
+@define-color dialog_bg_color @surface;
+@define-color dialog_fg_color @foreground;
+@define-color borders alpha(@foreground, 0.12);
+@define-color destructive_bg_color @red;
+@define-color destructive_fg_color @background;
+@define-color success_bg_color @green;
+@define-color success_fg_color @background;
+@define-color warning_bg_color @yellow;
+@define-color warning_fg_color @background;
+@define-color error_bg_color @red;
+@define-color error_fg_color @background;
+
+* {
+  border-radius: 0;
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="188" viewBox="0 0 800 188">
+  <defs>
+    <filter id="gear-tint" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values=".75 0 0 0 .25 .5 0 0 0 .08 .12 0 0 0 .005 0 0 0 1 0"/>
+    </filter>
+  </defs>
+  <g transform="translate(-150 -51) scale(1.38 1.6)">
+    <image href="iron-gear-wheel.png" x="108" y="31" width="102" height="102" filter="url(#gear-tint)"/>
+    <image href="omarchy-wordmark.png" x="144" y="-1" width="570" height="190"/>
+  </g>
+</svg>

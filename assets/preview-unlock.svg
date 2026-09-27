@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1">
+      <stop stop-color="#191810"/>
+      <stop offset="1" stop-color="#26231b"/>
+    </linearGradient>
+    <pattern id="grid" width="96" height="96" patternUnits="userSpaceOnUse">
+      <path d="M96 0H0V96" fill="none" stroke="#d4cab2" stroke-opacity=".035" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+  <path d="M0 250h1920M0 830h1920" stroke="#dda13b" stroke-opacity=".12" stroke-width="2"/>
+  <image href="unlock.svg" x="560" y="445" width="800" height="188"/>
+  <path d="M776 684v-8a10 10 0 0 1 20 0v8" fill="none" stroke="#d4cab2" stroke-width="4"/>
+  <rect x="772" y="681" width="28" height="27" rx="2" fill="#d4cab2"/>
+  <circle cx="786" cy="693" r="3" fill="#191810"/>
+  <path d="M786 696v7" stroke="#191810" stroke-width="3"/>
+  <rect x="817" y="675" width="285" height="47" fill="none" stroke="#d4cab2" stroke-width="3"/>
+  <g fill="#d4cab2">
+    <circle cx="840" cy="698" r="6"/><circle cx="860" cy="698" r="6"/>
+    <circle cx="880" cy="698" r="6"/><circle cx="900" cy="698" r="6"/>
+  </g>
+</svg>
